@@ -28,6 +28,8 @@ log = logging.getLogger("gemini_web_mcp.service")
 SESSION_RE = re.compile(r"^[0-9a-f]{32}$")
 IMAGE_RE = re.compile(r"^[0-9a-f]{16}$")
 MAX_GEMINI_TEXT = 1500
+# Leftovers of Gemini's image placeholders in reply text, e.g. a stray "_644" or a googleusercontent link.
+_PLACEHOLDER_RE = re.compile(r"https?://googleusercontent\.com/\S*|(?<!\w)_\d{1,6}(?!\w)")
 RETRY_PAUSE_SECONDS = 3.0
 MIN_SECONDS_FOR_RETRY = 30.0
 # New chats use the configured default model, known only once the backend is connected.
@@ -445,7 +447,7 @@ async def _wait_until(tasks: list[asyncio.Task], timeout: float) -> None:
 
 
 def _clip(text: str) -> str:
-    text = (text or "").strip()
+    text = re.sub(r"[ \t]{2,}", " ", _PLACEHOLDER_RE.sub("", text or "")).strip()
     return text if len(text) <= MAX_GEMINI_TEXT else text[:MAX_GEMINI_TEXT] + " [...]"
 
 

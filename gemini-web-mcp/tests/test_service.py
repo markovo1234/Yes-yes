@@ -221,3 +221,12 @@ async def test_configured_model_is_used_even_before_first_connect(make_service, 
     backend.default_model = "gemini-flash"  # edits must keep the chat's own model
     await service.edit_image(gen.session_id, gen.images[0].image_id, "Change A to B.")
     assert backend.sent[-1]["model"] == "gemini-pro"
+
+
+def test_gemini_placeholder_leftovers_are_removed():
+    from app.service import _clip
+
+    assert _clip("_639") == ""
+    assert _clip("Here is the painting. _651") == "Here is the painting."
+    assert _clip("See http://googleusercontent.com/image_generation_content/3 now") == "See now"
+    assert _clip("keep file_12 and v_2 intact") == "keep file_12 and v_2 intact"
